@@ -1,0 +1,11 @@
+# Normaliza fins de linha para LF no repositório (evita churn CRLF/LF
+# entre Windows local e o CI Linux, mantendo ruff-format determinístico).
+* text=auto eol=lf
+
+# Artefatos binários (não normalizar)
+*.xlsx binary
+*.parquet binary
+*.duckdb binary
+*.png binary
+*.jpg binary
+*.gif binary

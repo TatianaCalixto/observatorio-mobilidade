@@ -1,0 +1,16 @@
+# Gates de qualidade executados antes de cada commit.
+# Instalar: uv run pre-commit install
+# Rodar em tudo: uv run pre-commit run --all-files
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    # Mantido em sincronia com a versão do ruff no uv.lock (0.15.15).
+    rev: v0.15.15
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace

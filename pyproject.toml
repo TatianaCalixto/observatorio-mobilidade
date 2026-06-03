@@ -1,0 +1,58 @@
+[project]
+name = "observatorio-mobilidade"
+version = "0.1.0"
+description = "Observatório de Mobilidade Urbana — projeto de dados end-to-end (engenharia + análise + ML) sobre o transporte público de São Paulo."
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "duckdb",
+    "pandas",
+    "polars",
+    "pyarrow",
+    "requests",
+    "httpx",
+    "python-dotenv",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "ruff",
+    "pre-commit",
+]
+
+[tool.uv]
+# Projeto de dados (aplicação), não uma biblioteca instalável.
+package = false
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+# Artefatos não versionados/gerados não devem ser linted.
+# gerar_planilha_sprints.py é o script gerador one-off da planilha de planejamento
+# (artefato de provenance, não código-fonte mantido) — ver Decisão DEC-001.
+extend-exclude = [".venv", "data", "transform/target", "mlruns", "gerar_planilha_sprints.py"]
+
+[tool.ruff.lint]
+# Conjunto pragmático: erros (E), pyflakes (F), imports (I),
+# pycodestyle warnings (W), pyupgrade (UP), bugbear (B).
+select = ["E", "F", "I", "W", "UP", "B"]
+
+[tool.ruff.format]
+quote-style = "double"
+line-ending = "lf"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# Repo usa layout flat (pacotes na raiz); expõe a raiz para os imports.
+pythonpath = ["."]
+addopts = "-ra"
+
+[tool.coverage.run]
+# Cobertura medida sobre os pacotes Python do projeto.
+source = ["ingestion", "ml", "app", "analysis"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true

@@ -1,0 +1,77 @@
+# ===== Observatório de Mobilidade — .gitignore =====
+# Nunca versionar: dados brutos/pesados, segredos, artefatos de build e ambiente.
+
+# --- Segredos / configuração local ---
+.env
+.env.*
+!.env.example
+
+# --- Dados locais (camada RAW/STAGING e warehouse) ---
+# Ignora todo o conteúdo de data/, preservando apenas a estrutura de pastas.
+data/**
+!data/raw/
+!data/staging/
+!data/raw/.gitkeep
+!data/staging/.gitkeep
+
+# Formatos de dados pesados em qualquer lugar do repo
+*.parquet
+*.duckdb
+*.duckdb.wal
+*.csv
+*.zip
+*.gz
+*.feather
+*.arrow
+
+# --- Machine Learning / experimentos ---
+mlruns/
+mlartifacts/
+*.pkl
+*.joblib
+*.onnx
+
+# --- Ambiente Python / uv ---
+# .python-version É versionado (pin do Python 3.12 p/ reprodutibilidade).
+.venv/
+venv/
+env/
+
+# --- Caches e artefatos Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+build/
+dist/
+.eggs/
+
+# --- Testes / cobertura / lint ---
+.pytest_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+.mypy_cache/
+
+# --- dbt ---
+transform/target/
+transform/dbt_packages/
+transform/logs/
+.user.yml
+
+# --- Notebooks ---
+.ipynb_checkpoints/
+
+# --- IDEs / editores ---
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# --- Sistema operacional ---
+.DS_Store
+Thumbs.db
+desktop.ini
