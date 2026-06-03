@@ -1,0 +1,4 @@
+stop_id,stop_name,stop_lat,stop_lon
+70001,Terminal Lapa,-23.52810,-46.70123
+70002,Estacao Barra Funda,-23.52550,-46.66510
+70003,Praca da Se,-23.55020,-46.63380

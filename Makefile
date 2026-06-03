@@ -26,8 +26,8 @@ lint:  ## Verifica lint e formatacao com ruff (nao altera arquivos)
 test:  ## Roda a suite de testes (pytest)
 	uv run pytest
 
-ingest:  ## [Sprint 2] Ingestao das fontes publicas para a camada RAW (Parquet)
-	@echo make ingest: a ser implementado na Sprint 2 -- ingestao.
+ingest:  ## Ingestao das fontes (GTFS+INMET+SIDRA) -> RAW Parquet -> DuckDB
+	uv run python -m ingestion.run_all
 
 dbt-build:  ## [Sprint 3] Build dos modelos dbt (staging - intermediate - marts)
 	@echo make dbt-build: a ser implementado na Sprint 3 -- modelagem dbt.

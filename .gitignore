@@ -24,6 +24,9 @@ data/**
 *.feather
 *.arrow
 
+# Exceção: fixtures de teste (pequenas, determinísticas) são versionadas.
+!tests/fixtures/**
+
 # --- Machine Learning / experimentos ---
 mlruns/
 mlartifacts/

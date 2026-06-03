@@ -1,0 +1,3 @@
+route_id,route_short_name,route_long_name,route_type
+8000-10,8000-10,Lapa - Se,3
+875A-10,875A-10,Barra Funda - Se,3
