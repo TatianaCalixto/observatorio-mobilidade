@@ -32,8 +32,8 @@ ingest:  ## Ingestao das fontes (GTFS+INMET+SIDRA) -> RAW Parquet -> DuckDB
 dbt-build:  ## Build dos modelos dbt (staging -> intermediate -> marts) + testes
 	uv run dbt build --project-dir transform --profiles-dir transform
 
-train:  ## [Sprint 5] Treino e avaliacao do modelo de ML
-	@echo make train: a ser implementado na Sprint 5 -- machine learning.
+train:  ## Treina (baseline+XGBoost), registra no MLflow e serializa o modelo
+	uv run python -m ml.serialize
 
 app:  ## [Sprint 6] Sobe o dashboard Streamlit
 	@echo make app: a ser implementado na Sprint 6 -- app Streamlit.
