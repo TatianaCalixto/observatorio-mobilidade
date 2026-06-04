@@ -78,3 +78,8 @@ transform/logs/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# --- Exceção: snapshot curado (dados públicos) para o deploy público do app ---
+# Colocado no fim para vencer as regras *.duckdb / *.joblib acima.
+!app_data/marts.duckdb
+!app_data/modelo_demanda.joblib
