@@ -6,6 +6,7 @@ testáveis sem o runtime do Streamlit. ``get_con`` é a conexão cacheada usada 
 
 from __future__ import annotations
 
+import os
 from datetime import date
 from pathlib import Path
 
@@ -13,13 +14,25 @@ import duckdb
 import polars as pl
 import streamlit as st
 
-from ingestion.config import load_settings
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
+
+def caminho_db() -> Path:
+    """Resolve o DuckDB a usar, em ordem: env ``DUCKDB_PATH`` → warehouse local →
+    snapshot de demo (``app_data/marts.duckdb``, usado no deploy público)."""
+    env = os.environ.get("DUCKDB_PATH")
+    if env:
+        return Path(env)
+    local = PROJECT_ROOT / "mobilidade.duckdb"
+    if local.exists():
+        return local
+    return PROJECT_ROOT / "app_data" / "marts.duckdb"
 
 
 def conectar(caminho: str | Path | None = None) -> duckdb.DuckDBPyConnection:
     """Abre uma conexão DuckDB read-only para os marts do projeto."""
     if caminho is None:
-        caminho = load_settings().duckdb_path
+        caminho = caminho_db()
     return duckdb.connect(str(caminho), read_only=True)
 
 

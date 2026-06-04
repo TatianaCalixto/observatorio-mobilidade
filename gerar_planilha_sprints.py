@@ -848,7 +848,7 @@ def main():
     build_blockers(wb)
     build_decisions(wb)
 
-    out_path = r"d:\Projetos\Dados\observatorio_mobilidade_planejamento_sprints.xlsx"
+    out_path = "observatorio_mobilidade_planejamento_sprints.xlsx"
     wb.save(out_path)
     print(f"Planilha gerada: {out_path}")
     print(f"Total de sprints: {len(SPRINTS)}")

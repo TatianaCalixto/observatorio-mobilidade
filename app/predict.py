@@ -14,10 +14,15 @@ import streamlit as st
 from ml.serialize import DEFAULT_MODEL_PATH, carregar_modelo
 from ml.serialize import prever as _prever
 
+#: Snapshot do modelo usado no deploy público (quando o artefato local não existe).
+DEPLOY_MODEL_PATH = DEFAULT_MODEL_PATH.parents[2] / "app_data" / "modelo_demanda.joblib"
+
 
 def carregar_artefato(caminho: str | Path | None = None) -> dict[str, Any]:
-    """Carrega o artefato do modelo (joblib)."""
-    return carregar_modelo(caminho or DEFAULT_MODEL_PATH)
+    """Carrega o artefato do modelo (joblib). Usa o snapshot de deploy como fallback."""
+    if caminho is None:
+        caminho = DEFAULT_MODEL_PATH if DEFAULT_MODEL_PATH.exists() else DEPLOY_MODEL_PATH
+    return carregar_modelo(caminho)
 
 
 @st.cache_resource(show_spinner=False)

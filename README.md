@@ -1,118 +1,208 @@
-# Observatório de Mobilidade Urbana
+# Observatório de Mobilidade Urbana 🚌
 
-> Projeto de dados **end-to-end** (Engenharia + Análise + Machine Learning) sobre o
-> transporte público de São Paulo, construído como portfólio técnico seguindo a
-> metodologia de **documentação viva + agente executor**.
+> Projeto de dados **end-to-end** (Engenharia + Análise + Machine Learning + App) sobre o
+> transporte público de São Paulo — construído com a metodologia de
+> **documentação viva + agente executor**.
 
----
+[![CI](https://github.com/TatianaCalixto/observatorio-mobilidade/actions/workflows/ci.yml/badge.svg)](https://github.com/TatianaCalixto/observatorio-mobilidade/actions/workflows/ci.yml)
 
-## Pergunta de negócio
+Este repositório tem **duas camadas de leitura**:
 
-> Dá para prever atrasos/demanda no transporte público a partir de fatores como dia da
-> semana, clima e linha — e onde estão os principais gargalos da rede?
-
-O projeto percorre o ciclo completo de dados — ingestão → modelagem → qualidade →
-análise → machine learning → visualização — orbitando uma única pergunta de negócio.
-O entregável final é um **app web público** (Streamlit) com dashboard analítico, mapa da
-rede e previsões do modelo, sustentado por um pipeline ELT reprodutível e versionado.
-
-**Recorte temporal:** últimos 12 meses (**2025-06-01 a 2026-05-31**).
+1. **O produto** — um pipeline ELT reprodutível (GTFS/INMET/IBGE → DuckDB → dbt → ML) e um
+   dashboard Streamlit que responde a uma pergunta de negócio.
+2. **O método** — todo o projeto foi planejado e executado como um **caso de uso de
+   documentação viva**: uma planilha de sprints é a *fonte única de verdade* e um agente
+   executor (Claude Code) trabalhou tarefa por tarefa, sem fechar nada sem teste verde e
+   parando para perguntar sempre que uma decisão saía do escopo.
 
 ---
 
-## Metodologia: documentação viva + agente executor
+## A pergunta de negócio
 
-Este repositório é executado a partir de duas fontes de verdade versionadas:
+> **Dá para prever atrasos/demanda no transporte público a partir de dia da semana, clima
+> e linha — e onde estão os principais gargalos da rede?**
 
-- **[`blueprint.md`](blueprint.md)** — referência funcional: visão geral, fontes de dados,
-  arquitetura, stack, módulos e roadmap.
-- **`observatorio_mobilidade_planejamento_sprints.xlsx`** — fonte única de verdade
-  operacional: backlog de 40 tarefas em 8 sprints, com critérios de aceitação, testes
-  obrigatórios, plano de testes, impedimentos e decisões técnicas.
+### A resposta (honesta)
 
-Cada tarefa só é concluída com **testes verdes**, e toda regra de negócio tem **teste de
-regressão**. Dúvidas de escopo viram impedimentos registrados, não improvisos.
+A única fonte de horários disponível é o **GTFS estático** (o serviço **planejado**), sem
+dados realizados. Em vez de inventar "atrasos reais", o projeto modela a **oferta
+planejada** (partidas/dia por linha e *headway*) e responde:
+
+| Fator | Prevê a oferta planejada? |
+|---|---|
+| **Linha** | ✅ é o maior determinante (metrô ~2,6 min de headway; linhas noturnas até 60 min) |
+| **Dia da semana** | ✅ útil **169.638** > sábado **162.599** > domingo **152.024** partidas/dia |
+| **Clima** | ❌ correlação ≈ 0 — o serviço **planejado não muda com o tempo** (o clima afetaria a demanda *realizada*, que não existe nesta fonte) |
+
+Esse "não" é um resultado de verdade: está documentado em
+[`docs/metrica_oferta.md`](docs/metrica_oferta.md) e
+[`analysis/relatorio_insights.md`](analysis/relatorio_insights.md), e levou a uma decisão
+explícita sobre o alvo do ML (ver [Decisões](docs/sprints_decisoes.md), DEC-007).
 
 ---
 
-## Stack técnica
+## Arquitetura
+
+```mermaid
+flowchart LR
+    subgraph Fontes["Fontes públicas"]
+        G["GTFS SPTrans"]
+        I["INMET (clima)"]
+        S["IBGE/SIDRA (pop.)"]
+    end
+    G & I & S --> ING["Ingestão Python<br/>(idempotente)"]
+    ING --> RAW["RAW Parquet<br/>particionado"]
+    RAW --> DUCK[("DuckDB")]
+    DUCK --> DBT["dbt<br/>staging → intermediate → marts"]
+    DBT --> AN["Análise<br/>(gargalos, sazonalidade, clima)"]
+    DBT --> ML["ML<br/>baseline + XGBoost + MLflow"]
+    AN & ML --> APP["App Streamlit<br/>(KPIs, mapa, previsões)"]
+    PREF["Prefect<br/>(orquestra + agenda)"] -.-> ING & DBT & ML
+    CI["GitHub Actions<br/>(ruff + pytest≥80% + dbt test)"] -.-> DBT
+```
+
+- **Local-first**: roda 100% na máquina (DuckDB, sem infra paga obrigatória).
+- **Camadas explícitas**: `raw` (imutável) → `staging` → `intermediate` → `marts`.
+- **Idempotência** e **reprodutibilidade**: ambiente travado por lockfile, seeds fixas no ML.
+
+---
+
+## Resultados e insights
+
+- **Gargalos de regularidade**: linhas periféricas/noturnas com *headway* de até **60 min**;
+  no extremo oposto, o **metrô** (Linha 1: ~1.408 partidas/dia, headway 2,6 min).
+- **Sazonalidade**: a oferta cai ~10% no domingo; é constante entre dias úteis (propriedade
+  honesta do dado planejado).
+- **Machine Learning**: prevendo uma **demanda simulada e rotulada** (DEC-007), o **XGBoost
+  (MAE 6,8)** supera o baseline (MAE 17,9) ao capturar o efeito do clima — com split
+  **temporal sem vazamento** e tracking no **MLflow**.
+
+📄 Relatório reproduzível: [`analysis/relatorio_insights.md`](analysis/relatorio_insights.md)
+· 📐 Métrica central: [`docs/metrica_oferta.md`](docs/metrica_oferta.md)
+
+---
+
+## O app em ação
+
+Dashboard Streamlit (`make app`) com KPIs, análises, mapa interativo e previsões.
+
+| Visão Geral | Mapa da rede |
+|---|---|
+| ![Visão Geral](docs/img/app_visao_geral.png) | ![Mapa](docs/img/app_mapa.png) |
+
+A seção de **previsões** deixa explícito que a demanda é **simulada/ilustrativa** (decisão
+de honestidade, DEC-007):
+
+![Previsões](docs/img/app_previsoes.png)
+
+---
+
+## O método: documentação viva + agente executor
+
+O diferencial deste portfólio é **como** ele foi feito. Duas fontes de verdade versionadas
+guiaram tudo:
+
+- **[`blueprint.md`](blueprint.md)** — referência funcional (pergunta, fontes, arquitetura, roadmap).
+- **Planilha de sprints** (`.xlsx`, renderizada em MD legível abaixo) — verdade operacional:
+  40 tarefas em 8 sprints, cada uma com **critérios de aceitação** e **testes obrigatórios**.
+
+Regras inegociáveis aplicadas pelo agente executor ([prompt](PROMPT_INICIAL_CLAUDE_CODE.md)):
+**sem teste verde, a tarefa não fecha**; toda regra de negócio tem **teste de regressão**;
+em qualquer dúvida de escopo, **parar e perguntar** (virou um impedimento registrado).
+
+| Planejamento (renderizado da planilha) | |
+|---|---|
+| [Visão Geral](docs/sprints_visao_geral.md) | status das 8 sprints |
+| [Backlog](docs/sprints_backlog.md) | as 40 tarefas, critérios e testes |
+| [Plano de Testes](docs/sprints_plano_testes.md) | checks de regressão por sprint |
+| [Decisões](docs/sprints_decisoes.md) | ADRs do dia a dia (DEC-001…007) |
+| [Impedimentos](docs/sprints_impedimentos.md) | dúvidas que pararam a execução |
+
+> Esses arquivos mostram o **rastro auditável**: por que cada escolha técnica foi feita
+> (DuckDB, mirror público do GTFS, métrica de oferta, alvo de ML) e onde o agente parou
+> para perguntar em vez de improvisar.
+
+ADRs consolidados: [`docs/adr/`](docs/adr/).
+
+---
+
+## Stack
 
 | Camada | Ferramenta |
 |---|---|
-| Linguagem / ambiente | **Python 3.12** gerenciado por **uv** (lockfile versionado) |
-| Ingestão | `requests` / `httpx`, GTFS / CSV / APIs públicas |
-| Camada RAW | **Parquet** particionado |
-| Warehouse | **DuckDB** (analítico, local) |
-| Transformação | **dbt-duckdb** (staging → intermediate → marts) |
-| Orquestração | **Prefect** |
-| Machine Learning | **scikit-learn / XGBoost** + **MLflow** |
-| Visualização | **Streamlit** + mapa (pydeck / folium) |
-| Qualidade | **ruff**, **pytest**, **pre-commit** |
-| CI/CD | **GitHub Actions** |
-| Empacotamento | **Dockerfile**, **Makefile** |
+| Linguagem / ambiente | **Python 3.12** + **uv** (lockfile) |
+| Ingestão | `requests`/`httpx`, GTFS/CSV/API |
+| RAW | **Parquet** · Warehouse: **DuckDB** |
+| Transformação | **dbt-duckdb** (+ testes e *unit tests*) |
+| ML | **scikit-learn / XGBoost** + **MLflow** |
+| App | **Streamlit** + **pydeck** (mapa) |
+| Orquestração | **Prefect** (schedule + retries) |
+| Qualidade / CI | **ruff**, **pytest** (cobertura ≥ 80%), **pre-commit**, **GitHub Actions** |
+| Empacotamento | **Dockerfile** (multi-stage), **Makefile** |
 
 ---
 
-## Arquitetura (visão geral)
+## Como reproduzir
 
+Pré-requisitos: [uv](https://docs.astral.sh/uv/) (e, opcional, Docker).
+
+```bash
+# 1. Ambiente
+make setup                 # uv sync (cria .venv com Python 3.12)
+cp .env.example .env       # ajusta a janela temporal e as fontes
+
+# 2. Pipeline completo (ingestão → DuckDB → dbt → modelo)
+make ingest                # popula RAW + DuckDB (idempotente)
+make dbt-build             # staging → intermediate → marts (+ testes)
+make train                 # baseline + XGBoost + MLflow + modelo serializado
+#   ... ou tudo orquestrado pelo Prefect:
+uv run python -m orchestration.flow
+
+# 3. App
+make app                   # http://localhost:8501
+
+# Qualidade
+make lint && make test     # ruff + pytest
 ```
-fontes públicas ──> ingestão (Python) ──> camada RAW (Parquet particionado)
-   GTFS / SPTrans                                  │
-   INMET (clima)                          dbt (staging → intermediate → marts)
-   IBGE / SIDRA                                    │
-   Base dos Dados                         ┌────────┴────────┐
-                                      análise (SQL)     feature store
-                                          │                  │
-                                      Streamlit          modelo (XGBoost)
-                                      (dashboard)        + MLflow tracking
-```
+
+Tudo também roda em container: `docker build -t observatorio-mobilidade . && docker run -p 8501:8501 observatorio-mobilidade`.
+Detalhes em [`docs/orquestracao.md`](docs/orquestracao.md).
 
 ---
 
-## Estrutura de pastas
+## Estrutura do repositório
 
 ```
 .
-├── ingestion/     # scripts de coleta (GTFS, INMET, IBGE, Base dos Dados) → RAW
-├── transform/     # projeto dbt-duckdb (staging → intermediate → marts)
-├── ml/            # feature engineering, baseline, modelo, tracking
-├── app/           # dashboard Streamlit
-├── analysis/      # análise exploratória, notebooks, relatórios
-├── tests/         # suíte pytest (incl. regressão de regras de negócio)
-├── docs/          # documentação viva, ADRs, diagramas
-├── data/
-│   ├── raw/       # camada RAW local (Parquet) — NÃO versionada
-│   └── staging/   # dados intermediários locais — NÃO versionada
-├── blueprint.md   # referência funcional do projeto
-└── observatorio_mobilidade_planejamento_sprints.xlsx  # backlog / verdade operacional
+├── ingestion/     # coleta GTFS/INMET/IBGE → RAW Parquet → DuckDB
+├── transform/     # projeto dbt (staging → intermediate → marts + testes)
+├── ml/            # features (split temporal), baseline, XGBoost, MLflow, serialização
+├── app/           # dashboard Streamlit (dados/predição/mapa testáveis + UI)
+├── analysis/      # consultas analíticas + relatório de insights reprodutível
+├── orchestration/ # flow Prefect (ingestão → dbt → treino) + schedule
+├── tests/         # 102 testes pytest (incl. regressões críticas)
+├── docs/          # métrica, ADRs, orquestração, planejamento renderizado
+├── blueprint.md   # referência funcional
+└── observatorio_mobilidade_planejamento_sprints.xlsx  # verdade operacional
 ```
 
-> `data/`, `*.duckdb`, `*.parquet`, `mlruns/`, `.venv/` e segredos (`.env`) **não são
-> versionados** (ver [`.gitignore`](.gitignore)). Configuração local usa `.env` a partir
-> de um `.env.example` (a ser criado na Sprint 2).
+---
+
+## Aprendizados
+
+- **Honestidade > impressão.** Descobrir que o clima não prevê a oferta *planejada* (corr ≈ 0)
+  é um resultado melhor de comunicar do que um número inflado. Virou decisão registrada e um
+  alvo de ML **simulado e claramente rotulado**, em vez de fingir dados realizados.
+- **Testes como trava operacional funcionam.** O gate de cobertura (≥80%) pegou uma regressão
+  real: os testes do app dependiam do banco/`.env` locais; no CI a cobertura caía para 79%.
+  Forçou um *warehouse* de teste determinístico — exatamente o tipo de bug que a fase de
+  hardening existe para travar.
+- **Parar e perguntar economiza retrabalho.** Os impedimentos (fonte do GTFS, métrica,
+  alvo do ML) eram decisões de escopo de verdade; decidi-los sozinho teria custado caro.
+- **`make all` reprodutível desde a Sprint 1.** Ter ambiente travado + CI verde antes de
+  qualquer dado real deixou todas as sprints seguintes "boringly" reprodutíveis.
 
 ---
 
-## Roadmap (8 sprints)
-
-| Sprint | Foco | Entregável verificável |
-|---|---|---|
-| **S1** | Fundação do repositório | `make setup`, lint e testes passando no CI |
-| **S2** | Ingestão (Extract & Load) | RAW populada com GTFS + INMET + IBGE de forma idempotente |
-| **S3** | Modelagem dbt | `dbt build` verde com testes de qualidade nas 3 camadas |
-| **S4** | Análise & métricas | Marts analíticos + métrica de atraso/demanda testada |
-| **S5** | Machine Learning | Modelo avaliado com split temporal + baseline + MLflow |
-| **S6** | App Streamlit | Dashboard local consumindo marts + modelo |
-| **S7** | Orquestração & CI/CD | Pipeline Prefect agendado + CI verde + cobertura ≥ 80% |
-| **S8** | Documentação & publicação | App público + README de portfólio + ADRs |
-
-**Status atual:** Sprint 1 em andamento (fundação do repositório).
-
----
-
-## Reprodutibilidade
-
-O objetivo é que `make all` reproduza o pipeline completo do zero em outra máquina, com
-CI verde (lint + pytest + dbt test) em todos os commits da branch principal. Os comandos
-padrão (`make setup`, `make lint`, `make test`, `make ingest`, `make dbt-build`,
-`make train`, `make app`) serão adicionados ao longo das sprints.
+_Repositório mantido como portfólio. O foco é o **método** (documentação viva + agente
+executor) tanto quanto o **produto**._

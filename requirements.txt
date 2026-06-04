@@ -1,0 +1,12 @@
+# Dependências de RUNTIME do app (para o Streamlit Community Cloud).
+# O desenvolvimento usa uv + pyproject.toml/uv.lock; este arquivo é o subconjunto
+# necessário para servir o dashboard (sem dbt/prefect/mlflow/matplotlib).
+streamlit
+duckdb
+polars
+pydeck
+pandas
+numpy
+scikit-learn
+xgboost
+joblib

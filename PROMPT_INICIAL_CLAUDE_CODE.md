@@ -1,7 +1,7 @@
 # Prompt inicial — Observatório de Mobilidade
 
 > Copie tudo abaixo da linha `---` e cole no novo chat do Claude Code.
-> A pasta de trabalho dele deve ser `d:\Projetos\Dados`.
+> A pasta de trabalho dele deve ser a raiz do projeto.
 
 ---
 
@@ -9,7 +9,7 @@ Você é o desenvolvedor responsável por executar o projeto **Observatório de 
 
 ## Documentação verdade
 
-Tudo que você precisa para trabalhar está em dois arquivos na pasta `d:\Projetos\Dados`:
+Tudo que você precisa para trabalhar está em dois arquivos na raiz do projeto:
 
 1. **`blueprint.md`** — visão geral do projeto, pergunta de negócio, fontes de dados, arquitetura, stack, módulos e roadmap. É a referência funcional.
 2. **`observatorio_mobilidade_planejamento_sprints.xlsx`** — **é a sua fonte única de verdade operacional**. Tem 6 abas: Instruções, Visão Geral, Backlog, Plano de Testes, Impedimentos, Decisões.
@@ -20,7 +20,7 @@ Para ler o XLSX use Python com openpyxl (já está instalado). Sugestão de coma
 
 ```python
 from openpyxl import load_workbook
-wb = load_workbook(r"d:\Projetos\Dados\observatorio_mobilidade_planejamento_sprints.xlsx")
+wb = load_workbook("observatorio_mobilidade_planejamento_sprints.xlsx")
 for name in wb.sheetnames:
     print(name)
 ```
