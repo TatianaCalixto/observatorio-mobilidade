@@ -35,7 +35,7 @@ dbt-build:  ## Build dos modelos dbt (staging -> intermediate -> marts) + testes
 train:  ## Treina (baseline+XGBoost), registra no MLflow e serializa o modelo
 	uv run python -m ml.serialize
 
-app:  ## [Sprint 6] Sobe o dashboard Streamlit
-	@echo make app: a ser implementado na Sprint 6 -- app Streamlit.
+app:  ## Sobe o dashboard Streamlit (app/main.py)
+	uv run streamlit run app/main.py
 
 all: setup lint test  ## Executa o pipeline reprodutivel disponivel
