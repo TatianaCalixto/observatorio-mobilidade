@@ -9,6 +9,16 @@ A lógica de dados/predição/mapa vive em ``app.data`` / ``app.predict`` / ``ap
 
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
+# Ao rodar `streamlit run app/main.py`, o Streamlit coloca a pasta `app/` no sys.path
+# (não a raiz do repo). Garantimos a raiz no path para importar os pacotes do projeto
+# (ingestion, ml, analysis, app).
+_RAIZ = Path(__file__).resolve().parents[1]
+if str(_RAIZ) not in sys.path:
+    sys.path.insert(0, str(_RAIZ))
+
 PAGINAS = ["Visão Geral", "KPIs & Análises", "Mapa da Rede", "Previsões"]
 
 
