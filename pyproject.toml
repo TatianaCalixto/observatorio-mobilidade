@@ -13,6 +13,7 @@ dependencies = [
     "httpx",
     "python-dotenv",
     "dbt-duckdb",
+    "matplotlib",
 ]
 
 [dependency-groups]

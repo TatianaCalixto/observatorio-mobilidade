@@ -79,3 +79,42 @@ models:
         data_tests: [not_null]
       - name: headway_med_min
         description: "Headway médio planejado (minutos) — proxy de regularidade."
+
+  - name: mart_oferta_linha
+    description: >
+      Mart analítico da MÉTRICA de oferta por linha (agregado de fct_viagens_dia):
+      média de viagens/dia (total, dia útil, fim de semana) e headway médio. Ver
+      docs/metrica_oferta.md.
+    columns:
+      - name: route_id
+        description: "Linha (chave)."
+        data_tests:
+          - unique
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_linha')
+                field: route_id
+      - name: media_viagens_dia
+        description: "Média de partidas planejadas por dia operado."
+      - name: headway_med_min
+        description: "Headway médio (minutos) no período."
+
+  - name: mart_oferta_diaria
+    description: >
+      Série diária da rede (grão: data): oferta total, nº de linhas ativas, headway médio,
+      com atributos de tempo e clima. Base para sazonalidade, correlação com clima e ML.
+    columns:
+      - name: data
+        description: "Data (chave)."
+        data_tests:
+          - unique
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_tempo')
+                field: data
+      - name: total_viagens
+        description: "Oferta total da rede no dia (soma de n_viagens das linhas)."
+      - name: choveu
+        description: "Verdadeiro se houve precipitação no dia."

@@ -1,0 +1,32 @@
+version: 2
+
+# Bateria de regressão da MÉTRICA crítica (S04-T01): trava o cálculo da oferta planejada
+# (partidas/dia e headway médio) a partir das frequências. Deve permanecer verde em todas
+# as sprints seguintes (regra inegociável). Ver docs/metrica_oferta.md e DEC-006.
+unit_tests:
+  - name: metrica_oferta_partidas_e_headway
+    description: >
+      Caso manual conhecido: T1 com duas janelas (1h a cada 600s = 6 partidas; 1h a cada
+      1200s = 3 partidas → 9 partidas/dia; headway médio ponderado = 900s). Cobre também:
+      janela com headway 0 (guarda de divisão por zero, ignorada) e T2 sem frequências
+      (dados faltantes → 0 partidas e headway nulo).
+    model: int_viagens_por_padrao
+    given:
+      - input: ref('stg_gtfs__trips')
+        rows:
+          - {trip_id: "T1", route_id: "R1", service_id: "USD"}
+          - {trip_id: "T2", route_id: "R1", service_id: "USD"}
+      - input: ref('stg_gtfs__frequencies')
+        rows:
+          - {trip_id: "T1", start_secs: 0, end_secs: 3600, headway_secs: 600}
+          - {trip_id: "T1", start_secs: 3600, end_secs: 7200, headway_secs: 1200}
+          - {trip_id: "T1", start_secs: 7200, end_secs: 10800, headway_secs: 0}
+      - input: ref('stg_gtfs__stop_times')
+        rows:
+          - {trip_id: "T1", stop_sequence: 1}
+          - {trip_id: "T1", stop_sequence: 2}
+          - {trip_id: "T2", stop_sequence: 1}
+    expect:
+      rows:
+        - {trip_id: "T1", route_id: "R1", service_id: "USD", n_paradas: 2, partidas_dia: 9.0, headway_med_secs: 900.0}
+        - {trip_id: "T2", route_id: "R1", service_id: "USD", n_paradas: 1, partidas_dia: 0, headway_med_secs: null}
