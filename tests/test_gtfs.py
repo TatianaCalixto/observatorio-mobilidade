@@ -15,7 +15,14 @@ from ingestion.gtfs import (
 )
 
 FIXTURE_DIR = Path(__file__).parent / "fixtures" / "gtfs"
-EXPECTED_COUNTS = {"stops": 3, "routes": 2, "trips": 2, "stop_times": 4}
+EXPECTED_COUNTS = {
+    "stops": 3,
+    "routes": 2,
+    "trips": 2,
+    "stop_times": 4,
+    "calendar": 2,
+    "frequencies": 3,
+}
 
 
 def test_read_gtfs_table_parsing():
@@ -57,7 +64,7 @@ def test_ingest_gtfs_idempotente(tmp_path: Path):
     dados2 = pl.read_parquet(tmp_path / "stops.parquet")
 
     # Mesmos arquivos (sem duplicar), mesmas contagens e mesmos dados.
-    esperados = ["routes.parquet", "stop_times.parquet", "stops.parquet", "trips.parquet"]
+    esperados = sorted(f"{t}.parquet" for t in GTFS_TABLES)
     assert arquivos1 == arquivos2 == esperados
     assert counts1 == counts2 == EXPECTED_COUNTS
     assert dados1.equals(dados2)

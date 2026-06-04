@@ -1,0 +1,81 @@
+version: 2
+
+models:
+  - name: dim_tempo
+    description: "Dimensão de tempo: um registro por dia na janela do projeto."
+    columns:
+      - name: data
+        description: "Data (chave da dimensão)."
+        data_tests: [unique, not_null]
+      - name: iso_dia_semana
+        description: "Dia da semana ISO (1=segunda ... 7=domingo)."
+      - name: fim_de_semana
+        description: "Verdadeiro para sábado/domingo."
+
+  - name: dim_linha
+    description: "Dimensão de linha (rota) da rede de transporte."
+    columns:
+      - name: route_id
+        description: "Identificador único da linha (chave)."
+        data_tests: [unique, not_null]
+      - name: route_short_name
+        description: "Nome curto da linha."
+      - name: modo
+        description: "Modo de transporte derivado do route_type GTFS."
+
+  - name: dim_parada
+    description: "Dimensão de parada (ponto) da rede."
+    columns:
+      - name: stop_id
+        description: "Identificador único da parada (chave)."
+        data_tests: [unique, not_null]
+      - name: stop_lat
+        description: "Latitude."
+      - name: stop_lon
+        description: "Longitude."
+
+  - name: dim_clima
+    description: "Dimensão de clima diário (estação A701, São Paulo). Chave = data."
+    columns:
+      - name: data
+        description: "Data (chave da dimensão)."
+        data_tests: [unique, not_null]
+      - name: precipitacao_total_mm
+        description: "Precipitação total do dia (mm)."
+      - name: choveu
+        description: "Verdadeiro se houve precipitação no dia."
+
+  - name: fct_viagens_dia
+    description: >
+      Fato de OFERTA PLANEJADA de viagens. Grão: (linha, dia). Métricas: n_viagens
+      (oferta/demanda planejada de partidas no dia) e headway_med_min (regularidade).
+      Sem dados realizados (GTFS estático), "atraso" é reenquadrado como headway — DEC-006.
+    columns:
+      - name: viagem_dia_sk
+        description: "Chave surrogate do fato = route_id|data."
+        data_tests: [unique, not_null]
+      - name: route_id
+        description: "FK para dim_linha."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_linha')
+                field: route_id
+      - name: data
+        description: "FK para dim_tempo e dim_clima."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_tempo')
+                field: data
+          - relationships:
+              arguments:
+                to: ref('dim_clima')
+                field: data
+      - name: n_viagens
+        description: "Oferta planejada: nº de partidas no dia para a linha."
+        data_tests: [not_null]
+      - name: headway_med_min
+        description: "Headway médio planejado (minutos) — proxy de regularidade."

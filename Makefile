@@ -29,8 +29,8 @@ test:  ## Roda a suite de testes (pytest)
 ingest:  ## Ingestao das fontes (GTFS+INMET+SIDRA) -> RAW Parquet -> DuckDB
 	uv run python -m ingestion.run_all
 
-dbt-build:  ## [Sprint 3] Build dos modelos dbt (staging - intermediate - marts)
-	@echo make dbt-build: a ser implementado na Sprint 3 -- modelagem dbt.
+dbt-build:  ## Build dos modelos dbt (staging -> intermediate -> marts) + testes
+	uv run dbt build --project-dir transform --profiles-dir transform
 
 train:  ## [Sprint 5] Treino e avaliacao do modelo de ML
 	@echo make train: a ser implementado na Sprint 5 -- machine learning.

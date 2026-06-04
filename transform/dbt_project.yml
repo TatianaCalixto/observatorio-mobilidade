@@ -1,0 +1,27 @@
+name: "observatorio_mobilidade"
+version: "1.0.0"
+config-version: 2
+
+# Perfil definido em transform/profiles.yml (rodar dbt com --profiles-dir transform).
+profile: "observatorio_mobilidade"
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+target-path: "target"
+clean-targets: ["target", "dbt_packages"]
+
+# Janela temporal do projeto (mesma do .env). Usada para datar viagens e o spine de tempo.
+vars:
+  data_inicio: "2025-06-01"
+  data_fim: "2026-05-31"
+
+# Materialização por camada: staging/intermediate como views, marts como tabelas.
+models:
+  observatorio_mobilidade:
+    staging:
+      +materialized: view
+    intermediate:
+      +materialized: view
+    marts:
+      +materialized: table

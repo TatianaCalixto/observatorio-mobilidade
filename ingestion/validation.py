@@ -17,6 +17,19 @@ GTFS_REQUIRED_COLUMNS: dict[str, set[str]] = {
     "routes": {"route_id", "route_short_name", "route_type"},
     "trips": {"route_id", "service_id", "trip_id"},
     "stop_times": {"trip_id", "arrival_time", "departure_time", "stop_id", "stop_sequence"},
+    "calendar": {
+        "service_id",
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+        "sunday",
+        "start_date",
+        "end_date",
+    },
+    "frequencies": {"trip_id", "start_time", "end_time", "headway_secs"},
 }
 
 #: Schema esperado da saída tipada de clima (camada RAW).

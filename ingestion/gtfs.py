@@ -29,8 +29,16 @@ import polars as pl
 
 logger = logging.getLogger(__name__)
 
-#: Tabelas principais do GTFS ingeridas pelo projeto.
-GTFS_TABLES: tuple[str, ...] = ("stops", "routes", "trips", "stop_times")
+#: Tabelas do GTFS ingeridas pelo projeto. ``calendar`` e ``frequencies`` sustentam o
+#: modelo de oferta planejada (datar viagens e derivar nº de partidas/headway) — ver DEC-006.
+GTFS_TABLES: tuple[str, ...] = (
+    "stops",
+    "routes",
+    "trips",
+    "stop_times",
+    "calendar",
+    "frequencies",
+)
 
 
 class GTFSIngestionError(RuntimeError):

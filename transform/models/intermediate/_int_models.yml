@@ -1,0 +1,105 @@
+version: 2
+
+models:
+  - name: int_viagens_por_padrao
+    description: >
+      Oferta planejada por padrão de viagem (trip_id): partidas/dia e headway médio
+      derivados das frequências, mais nº de paradas. Grão: trip_id (sem fan-out).
+    columns:
+      - name: trip_id
+        description: "Padrão de viagem (grão)."
+        data_tests:
+          - unique
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_gtfs__trips')
+                field: trip_id
+      - name: route_id
+        description: "Linha da viagem."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_gtfs__routes')
+                field: route_id
+      - name: service_id
+        description: "Serviço/calendário da viagem."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_gtfs__calendar')
+                field: service_id
+      - name: partidas_dia
+        description: "Nº estimado de partidas no dia (soma duração/headway das janelas)."
+
+  - name: int_servico_datas
+    description: >
+      Bridge que data os serviços: quais service_id operam em cada data da janela.
+      Grão: (service_id, data).
+    columns:
+      - name: servico_data_sk
+        description: "Chave surrogate = service_id|data."
+        data_tests: [unique, not_null]
+      - name: service_id
+        description: "Serviço ativo na data."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_gtfs__calendar')
+                field: service_id
+      - name: data
+        description: "Data de operação."
+        data_tests: [not_null]
+
+  - name: int_clima_diario
+    description: "Clima agregado ao grão diário (precipitação total, temperatura média/min/max)."
+    columns:
+      - name: data
+        description: "Data (grão)."
+        data_tests:
+          - unique
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_clima')
+                field: data
+      - name: precipitacao_total_mm
+        description: "Precipitação total do dia (mm)."
+
+  - name: int_populacao_municipio
+    description: "População por município (contexto de região)."
+    columns:
+      - name: regiao_codigo
+        description: "Código IBGE do município (grão)."
+        data_tests:
+          - unique
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_populacao')
+                field: regiao_codigo
+
+  - name: int_viagens_dia
+    description: >
+      Base de viagens planejadas por linha e dia (oferta), datando os padrões via calendar.
+      Grão: (route_id, data). Sem fan-out (agregado por linha/dia).
+    columns:
+      - name: viagem_dia_sk
+        description: "Chave surrogate = route_id|data."
+        data_tests: [unique, not_null]
+      - name: route_id
+        description: "Linha."
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_gtfs__routes')
+                field: route_id
+      - name: data
+        description: "Dia de operação."
+        data_tests: [not_null]
+      - name: n_viagens
+        description: "Oferta planejada: nº de partidas no dia (soma sobre os padrões da linha)."

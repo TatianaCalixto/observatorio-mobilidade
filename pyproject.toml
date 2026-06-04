@@ -12,6 +12,7 @@ dependencies = [
     "requests",
     "httpx",
     "python-dotenv",
+    "dbt-duckdb",
 ]
 
 [dependency-groups]

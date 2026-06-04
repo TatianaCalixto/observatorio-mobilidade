@@ -1,0 +1,11 @@
+# Perfil dbt do projeto. Rodar dbt a partir da RAIZ do repositório, ex.:
+#   uv run dbt build --project-dir transform --profiles-dir transform
+# O caminho do DuckDB é resolvido relativo ao diretório de execução (raiz do repo);
+# pode ser sobrescrito via a variável de ambiente DBT_DUCKDB_PATH.
+observatorio_mobilidade:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: "{{ env_var('DBT_DUCKDB_PATH', 'mobilidade.duckdb') }}"
+      threads: 4

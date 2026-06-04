@@ -30,3 +30,19 @@ jobs:
 
       - name: Run tests (pytest)
         run: uv run pytest
+
+      - name: dbt debug
+        run: uv run dbt debug --project-dir transform --profiles-dir transform
+
+      # Popula o DuckDB com as fixtures (janela de 1 dia coberta pela fixture de clima)
+      # para que o dbt build rode sem a ingestão real pesada.
+      - name: Seed DuckDB from fixtures
+        env:
+          DATA_INICIO: "2025-06-01"
+          DATA_FIM: "2025-06-01"
+        run: uv run python -m ingestion.seed_fixtures
+
+      - name: dbt build (run + test)
+        run: >
+          uv run dbt build --project-dir transform --profiles-dir transform
+          --vars '{"data_inicio": "2025-06-01", "data_fim": "2025-06-01"}'
