@@ -33,5 +33,5 @@
 | 7 | ci | Integração | CI roda lint + pytest + dbt build (gates) | .github/workflows/ci.yml | Concluída | 2026-06-04 | CI: ruff check + format --check, pytest --cov --cov-fail-under=80, dbt debug/parse, seed fixtures, dbt build (run+test incl. unit test da metrica). Gate cobertura <80% e dbt test falham o CI. |
 | 7 | deploy | Smoke | docker build + run executa make all reduzido | Dockerfile | Concluída | 2026-06-04 | docker build OK (multi-stage uv); docker run observatorio-mobilidade make all -> 102 passed (lint+testes, modo reduzido com fixtures). |
 | 7 | global | Cobertura | pytest --cov >= 80% global | pyproject.toml [tool.coverage] | Concluída | 2026-06-04 | Cobertura global 90.83% (>=80%). Fonte: ingestion/ml/app/analysis/orchestration; exclui main()/__main__ e funcoes de rede/IO (pragma no cover) validadas por execucao real. |
-| 8 | docs | Manual | Reproduzir projeto seguindo o README do zero |  | Pendente |  |  |
+| 8 | docs | Manual | Reproduzir projeto seguindo o README do zero | README.md | Concluída | 2026-06-04 | README com passos make setup/ingest/dbt-build/train/app + docker, todos validados ao longo do projeto. Docker reproduz em ambiente limpo (docker run make all => 102 passed). Diagrama mermaid + screenshots. |
 | 8 | deploy | Smoke | App público carrega dashboard, mapa e previsão |  | Pendente |  |  |
