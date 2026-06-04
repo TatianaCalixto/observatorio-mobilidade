@@ -39,10 +39,10 @@
 | 9 | app/charts | Unitário | Gráfico de linha: rótulos de eixo e unidade corretos | tests/test_charts.py | Concluída | 2026-06-04 | test_grafico_linha_area_mais_linha_com_eixos: eixo Y titulo/unidade, X temporal, tooltip formatado. |
 | 9 | app/charts | Unitário | Barras de sazonalidade ordenadas Seg→Dom + cores | tests/test_charts.py | Concluída | 2026-06-04 | test_preparar_sazonalidade: ordem Seg->Dom (iso 1..7), rotulo PT, tipo_dia util/fim de semana; cor semantica no grafico_barra. |
 | 9 | app | Smoke | 4 páginas importam/renderizam com o novo tema | tests/test_app_smoke.py | Concluída | 2026-06-04 | AppTest parametrizado das 4 paginas sem excecao, com tema + graficos Altair. 106 testes verdes, cobertura 90.54%. |
-| 10 | app/mapa | Unitário | Mapeamento intensidade→cor (escala perceptual) |  | Pendente |  |  |
-| 10 | app/mapa | Unitário | Preparação da camada de mapa de calor |  | Pendente |  |  |
-| 10 | app | Unitário | Tabela de gargalos: colunas e formatos do column_config |  | Pendente |  |  |
-| 10 | app | Unitário | Cálculo de variação (delta) dos KPIs |  | Pendente |  |  |
-| 10 | app | Smoke | Página de KPIs em abas renderiza cada aba |  | Pendente |  |  |
-| 10 | app | Unitário | Pontos de sensibilidade da página de Previsões |  | Pendente |  |  |
-| 10 | global | Cobertura | pytest --cov >= 80% após o redesign |  | Pendente |  |  |
+| 10 | app/mapa | Unitário | Mapeamento intensidade→cor (escala perceptual) | tests/test_app_mapa.py | Concluída | 2026-06-04 | test_cor_viridis_faixas_esperadas: 0->roxo (68,1,84), 0.5->teal (38,130,142), 1->amarelo (253,231,37), clamp; adicionar_cores adiciona r/g/b. Viridis em Python puro (sem matplotlib no runtime). |
+| 10 | app/mapa | Unitário | Preparação da camada de mapa de calor | tests/test_app_mapa.py | Concluída | 2026-06-04 | test_preparar_heatmap_coordenadas_e_peso (stop_lon/stop_lat/peso, peso=n_passagens) + smoke do modo calor sem excecao. |
+| 10 | app | Unitário | Tabela de gargalos: colunas e formatos do column_config | tests/test_app.py | Concluída | 2026-06-04 | test_preparar_tabela_gargalos_colunas: Linha/Headway (min)/Viagens/dia. column_config: ProgressColumn (headway, barra inline, format min) + NumberColumn (viagens) + TextColumn (linha), hide_index. |
+| 10 | app | Unitário | Cálculo de variação (delta) dos KPIs | tests/test_app.py | Concluída | 2026-06-04 | test_variacao_metrica: 2a metade vs 1a metade (subida +, queda -, serie curta delta 0). Usado no delta dos st.metric (oferta normal, headway delta_color inverse). |
+| 10 | app | Smoke | Página de KPIs em abas renderiza cada aba | tests/test_app_kpis.py | Concluída | 2026-06-04 | Pagina KPIs em st.tabs (Tendencia/Sazonalidade/Gargalos) + st.divider. Smoke assert len(at.tabs)>=3 e sem excecao; filtros (periodo/linha) preservados acima das abas. |
+| 10 | app | Unitário | Pontos de sensibilidade da página de Previsões | tests/test_app_predict.py | Concluída | 2026-06-04 | test_pontos_sensibilidade_varia_precipitacao: curva precipitacao->demanda (colunas, n pontos, finitos). grafico_sensibilidade (quantitativo) testado em test_charts.py. |
+| 10 | global | Cobertura | pytest --cov >= 80% após o redesign | pytest --cov | Concluída | 2026-06-04 | 114 testes verdes, cobertura global 91.24% (>=80%). charts 100%, predict 100%, mapa 93%, data 89%, main 86%. 4 paginas renderizam; baterias criticas (metrica, anti-vazamento) verdes. |

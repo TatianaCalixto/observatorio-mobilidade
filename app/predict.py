@@ -9,6 +9,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+import polars as pl
 import streamlit as st
 
 from ml.serialize import DEFAULT_MODEL_PATH, carregar_modelo
@@ -55,3 +56,30 @@ def montar_features(
 def prever_demanda(artefato: dict[str, Any], features: dict[str, float]) -> float:
     """Prevê a demanda (simulada) para uma entrada de features. Retorna float."""
     return float(_prever(artefato, features)[0])
+
+
+def pontos_sensibilidade(
+    artefato: dict[str, Any],
+    *,
+    n_viagens: float,
+    iso_dia_semana: int,
+    mes: int,
+    temperatura: float,
+    precipitacoes: list[float],
+) -> pl.DataFrame:
+    """Curva de sensibilidade: demanda (simulada) prevista variando a precipitação.
+
+    Mantém as demais features fixas. Retorna colunas ``precipitacao`` e ``demanda``.
+    """
+    linhas = []
+    for p in precipitacoes:
+        feats = montar_features(
+            n_viagens=n_viagens,
+            iso_dia_semana=iso_dia_semana,
+            mes=mes,
+            precipitacao=p,
+            temperatura=temperatura,
+            choveu=p > 0,
+        )
+        linhas.append({"precipitacao": float(p), "demanda": prever_demanda(artefato, feats)})
+    return pl.DataFrame(linhas)

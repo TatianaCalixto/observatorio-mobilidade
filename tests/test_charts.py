@@ -2,7 +2,24 @@
 
 import polars as pl
 
-from app.charts import PALETA, grafico_barra, grafico_linha, preparar_sazonalidade
+from app.charts import (
+    PALETA,
+    grafico_barra,
+    grafico_linha,
+    grafico_sensibilidade,
+    preparar_sazonalidade,
+)
+
+
+def test_grafico_sensibilidade_quantitativo():
+    df = pl.DataFrame({"precipitacao": [0.0, 10.0, 20.0], "demanda": [100.0, 90.0, 80.0]})
+    spec = grafico_sensibilidade(
+        df, "precipitacao", "demanda", titulo_x="Precipitação (mm)", titulo_y="Demanda"
+    ).to_dict()
+    assert "layer" in spec
+    enc = spec["layer"][0]["encoding"]
+    assert enc["x"]["field"] == "precipitacao" and enc["x"]["type"] == "quantitative"
+    assert enc["x"]["axis"]["title"] == "Precipitação (mm)"
 
 
 def test_preparar_sazonalidade_ordem_seg_a_dom_e_tipo_dia():

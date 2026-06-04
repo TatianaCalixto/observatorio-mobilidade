@@ -71,6 +71,23 @@ def grafico_linha(
     return alt.layer(area, linha).properties(height=320)
 
 
+def grafico_sensibilidade(
+    df: pl.DataFrame, x: str, y: str, *, titulo_x: str, titulo_y: str
+) -> alt.LayerChart:
+    """Curva quantitativa (área + linha com pontos) — ex.: demanda × precipitação."""
+    base = alt.Chart(_pandas(df)).encode(
+        x=alt.X(f"{x}:Q", axis=alt.Axis(title=titulo_x)),
+        y=alt.Y(f"{y}:Q", axis=alt.Axis(title=titulo_y, format="~s")),
+        tooltip=[
+            alt.Tooltip(f"{x}:Q", title=titulo_x),
+            alt.Tooltip(f"{y}:Q", title=titulo_y, format=",.0f"),
+        ],
+    )
+    area = base.mark_area(opacity=0.15, color=PALETA["com_chuva"])
+    linha = base.mark_line(color=PALETA["com_chuva"], strokeWidth=2, point=True)
+    return alt.layer(area, linha).properties(height=260)
+
+
 def grafico_barra(
     df: pl.DataFrame,
     x: str,

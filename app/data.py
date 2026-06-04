@@ -128,3 +128,27 @@ def oferta_tipica_linha(con: duckdb.DuckDBPyConnection, route_id: str) -> float:
         "select avg(n_viagens) from fct_viagens_dia where route_id = ?", [route_id]
     ).fetchone()
     return float(row[0]) if row and row[0] is not None else 0.0
+
+
+def preparar_tabela_gargalos(df: pl.DataFrame) -> pl.DataFrame:
+    """Renomeia/seleciona as colunas dos gargalos para exibição (tabela com column_config)."""
+    return df.select(
+        pl.col("route_short_name").alias("Linha"),
+        pl.col("headway_med_min").alias("Headway (min)"),
+        pl.col("media_viagens_dia").alias("Viagens/dia"),
+    )
+
+
+def variacao_metrica(valores: list[float]) -> tuple[float, float]:
+    """Média da 2ª metade da série e sua variação (delta) vs a 1ª metade.
+
+    Usado para o ``delta`` dos KPIs (tendência dentro do período). Séries com 0 ou 1
+    ponto retornam delta 0.
+    """
+    n = len(valores)
+    if n < 2:
+        return (float(valores[0]) if valores else 0.0, 0.0)
+    meio = n // 2
+    anterior = sum(valores[:meio]) / meio
+    recente = sum(valores[meio:]) / (n - meio)
+    return (recente, recente - anterior)

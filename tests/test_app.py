@@ -18,6 +18,23 @@ def test_app_sobe_sem_excecao():
     assert len(at.sidebar) > 0  # navegação renderizada
 
 
+def test_preparar_tabela_gargalos_colunas(app_con):
+    from analysis.queries import linhas_pior_headway
+
+    tab = appdata.preparar_tabela_gargalos(linhas_pior_headway(app_con, n=5))
+    assert tab.columns == ["Linha", "Headway (min)", "Viagens/dia"]
+    assert tab.height >= 1
+
+
+def test_variacao_metrica_periodo_atual_vs_anterior():
+    rec, delta = appdata.variacao_metrica([10, 10, 20, 20])
+    assert rec == 20.0 and delta == 10.0  # subiu
+    _, delta_queda = appdata.variacao_metrica([20, 20, 10, 10])
+    assert delta_queda == -10.0  # caiu
+    assert appdata.variacao_metrica([5]) == (5.0, 0.0)  # série curta → delta 0
+    assert appdata.variacao_metrica([]) == (0.0, 0.0)
+
+
 def test_paginas_definidas():
     assert PAGINAS[0] == "Visão Geral"
     assert "Previsões" in PAGINAS

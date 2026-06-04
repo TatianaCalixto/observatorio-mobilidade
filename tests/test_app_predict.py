@@ -35,6 +35,25 @@ def test_montar_features_deriva_fim_de_semana_e_choveu():
     assert util["choveu"] == 1
 
 
+def test_pontos_sensibilidade_varia_precipitacao(ml_con, tmp_path: Path):
+    from app.predict import pontos_sensibilidade
+
+    modelo, metricas = treinar_modelo_final(ml_con)
+    artefato = carregar_artefato(salvar_modelo(modelo, metricas, tmp_path / "m.joblib"))
+    curva = pontos_sensibilidade(
+        artefato,
+        n_viagens=100,
+        iso_dia_semana=3,
+        mes=6,
+        temperatura=22,
+        precipitacoes=[0.0, 10.0, 20.0, 30.0],
+    )
+    assert curva.columns == ["precipitacao", "demanda"]
+    assert curva.height == 4
+    assert curva["precipitacao"].to_list() == [0.0, 10.0, 20.0, 30.0]
+    assert curva["demanda"].is_finite().all()
+
+
 def test_pagina_previsoes_renderiza_sem_excecao():
     # Com ou sem artefato (CI não tem), a página trata e não lança exceção.
     at = AppTest.from_file("app/main.py", default_timeout=60).run()

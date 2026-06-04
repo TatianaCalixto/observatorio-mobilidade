@@ -12,6 +12,8 @@ def test_pagina_kpis_renderiza_sem_excecao():
     at = AppTest.from_file("app/main.py", default_timeout=60).run()
     at.sidebar.radio[0].set_value("KPIs & Análises").run()
     assert at.exception == []
+    # reorganizada em abas (Tendência / Sazonalidade / Gargalos)
+    assert len(at.tabs) >= 3
 
 
 def test_listar_linhas(app_con):

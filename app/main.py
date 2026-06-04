@@ -117,91 +117,151 @@ def _pagina_kpis(st, appdata, con) -> None:
         return
 
     pdf = serie.to_pandas()
-    c1, c2, c3 = st.columns(3)
-    c1.metric("Oferta média/dia", f"{pdf[coluna_valor].mean():,.0f}")
-    c2.metric("Headway médio (min)", f"{pdf['headway_med_min'].mean():.1f}")
-    c3.metric("Dias no período", f"{len(pdf):,}")
+    _, oferta_delta = appdata.variacao_metrica(pdf[coluna_valor].tolist())
+    _, hw_delta = appdata.variacao_metrica(pdf["headway_med_min"].tolist())
+    with st.container(border=True):
+        c1, c2, c3 = st.columns(3)
+        c1.metric(
+            "Oferta média/dia", f"{pdf[coluna_valor].mean():,.0f}", delta=f"{oferta_delta:+,.0f}"
+        )
+        c2.metric(
+            "Headway médio (min)",
+            f"{pdf['headway_med_min'].mean():.1f}",
+            delta=f"{hw_delta:+.1f}",
+            delta_color="inverse",
+        )
+        c3.metric("Dias no período", f"{len(pdf):,}")
+    st.caption("Δ = média da 2ª metade do período vs a 1ª metade (tendência interna).")
+    st.divider()
 
-    st.subheader("Oferta planejada ao longo do tempo")
-    st.altair_chart(
-        grafico_linha(serie, "data", coluna_valor, titulo_y="Partidas/dia"),
-        use_container_width=True,
+    aba_tend, aba_saz, aba_garg = st.tabs(["📈 Tendência", "📅 Sazonalidade", "🚧 Gargalos"])
+
+    with aba_tend:
+        st.altair_chart(
+            grafico_linha(serie, "data", coluna_valor, titulo_y="Partidas/dia"),
+            use_container_width=True,
+        )
+
+    with aba_saz:
+        col_a, col_b = st.columns(2)
+        with col_a:
+            st.caption("Por dia da semana")
+            saz = preparar_sazonalidade(sazonalidade_dia_semana(con, data_inicio, data_fim))
+            st.altair_chart(
+                grafico_barra(
+                    saz,
+                    "dia",
+                    "media_viagens_dia",
+                    titulo_y="Partidas/dia",
+                    ordem_x=ORDEM_DIAS,
+                    cor_por="tipo_dia",
+                    cor_dominio=["Dia útil", "Fim de semana"],
+                    cor_faixa=[PALETA["dia_util"], PALETA["fim_de_semana"]],
+                ),
+                use_container_width=True,
+            )
+        with col_b:
+            st.caption("Por condição de chuva")
+            st.altair_chart(
+                grafico_barra(
+                    agregado_clima(con),
+                    "condicao",
+                    "oferta_media",
+                    titulo_y="Partidas/dia",
+                    cor_por="condicao",
+                    cor_dominio=["sem chuva", "com chuva"],
+                    cor_faixa=[PALETA["sem_chuva"], PALETA["com_chuva"]],
+                    rotulos=True,
+                ),
+                use_container_width=True,
+            )
+
+    with aba_garg:
+        tab = appdata.preparar_tabela_gargalos(linhas_pior_headway(con, n=10))
+        hw_max = float(tab["Headway (min)"].max() or 60)
+        st.dataframe(
+            tab.to_pandas(),
+            use_container_width=True,
+            hide_index=True,
+            column_config={
+                "Linha": st.column_config.TextColumn("Linha"),
+                "Headway (min)": st.column_config.ProgressColumn(
+                    "Headway (min)", format="%.1f min", min_value=0, max_value=hw_max
+                ),
+                "Viagens/dia": st.column_config.NumberColumn("Viagens/dia", format="%d"),
+            },
+        )
+
+
+MAPA_BASE = "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json"
+
+
+def _legenda_viridis(st) -> None:
+    st.markdown(
+        '<div style="display:flex;align-items:center;gap:8px;font-size:0.85rem;color:#566">'
+        "<span>menos movimento</span>"
+        '<div style="height:12px;width:180px;border-radius:6px;'
+        'background:linear-gradient(90deg,#440154,#3b528b,#21918c,#5ec962,#fde725)"></div>'
+        "<span>mais movimento</span>"
+        "<span style='margin-left:12px'>● tamanho = nº de passagens</span></div>",
+        unsafe_allow_html=True,
     )
-
-    col_a, col_b = st.columns(2)
-    with col_a:
-        st.subheader("Sazonalidade por dia da semana")
-        saz = preparar_sazonalidade(sazonalidade_dia_semana(con, data_inicio, data_fim))
-        st.altair_chart(
-            grafico_barra(
-                saz,
-                "dia",
-                "media_viagens_dia",
-                titulo_y="Partidas/dia",
-                ordem_x=ORDEM_DIAS,
-                cor_por="tipo_dia",
-                cor_dominio=["Dia útil", "Fim de semana"],
-                cor_faixa=[PALETA["dia_util"], PALETA["fim_de_semana"]],
-            ),
-            use_container_width=True,
-        )
-    with col_b:
-        st.subheader("Oferta por condição de chuva")
-        st.altair_chart(
-            grafico_barra(
-                agregado_clima(con),
-                "condicao",
-                "oferta_media",
-                titulo_y="Partidas/dia",
-                cor_por="condicao",
-                cor_dominio=["sem chuva", "com chuva"],
-                cor_faixa=[PALETA["sem_chuva"], PALETA["com_chuva"]],
-                rotulos=True,
-            ),
-            use_container_width=True,
-        )
-
-    st.subheader("Gargalos de regularidade (maior headway)")
-    st.dataframe(linhas_pior_headway(con, n=10).to_pandas(), use_container_width=True)
 
 
 def _pagina_mapa(st, appdata, con) -> None:
     import pydeck as pdk
 
-    from app.mapa import preparar_paradas
+    from app.mapa import adicionar_cores, preparar_heatmap, preparar_paradas
 
     st.title("Mapa da rede — movimento das paradas")
-    limite = st.slider("Nº de paradas (mais movimentadas)", 100, 5000, 1500, step=100)
+    col_lim, col_modo = st.columns([2, 1])
+    limite = col_lim.slider("Nº de paradas (mais movimentadas)", 100, 5000, 1500, step=100)
+    modo = col_modo.radio("Visualização", ["Pontos", "Mapa de calor"], horizontal=True)
     df = preparar_paradas(con, limite=limite)
     if df.height == 0:
         st.info("Sem paradas georreferenciadas disponíveis.")
         return
 
-    pdf = df.to_pandas()
-    pdf["raio"] = 30 + pdf["intensidade"] * 220
-    pdf["g"] = (180 * (1 - pdf["intensidade"])).astype(int)
-    camada = pdk.Layer(
-        "ScatterplotLayer",
-        data=pdf,
-        get_position=["stop_lon", "stop_lat"],
-        get_radius="raio",
-        get_fill_color=[255, "g", 40, 160],
-        pickable=True,
-    )
     vista = pdk.ViewState(
-        latitude=float(pdf["stop_lat"].median()),
-        longitude=float(pdf["stop_lon"].median()),
+        latitude=float(df["stop_lat"].median()),
+        longitude=float(df["stop_lon"].median()),
         zoom=10,
     )
+    if modo == "Mapa de calor":
+        camada = pdk.Layer(
+            "HeatmapLayer",
+            data=preparar_heatmap(df).to_pandas(),
+            get_position=["stop_lon", "stop_lat"],
+            get_weight="peso",
+            radiusPixels=45,
+        )
+        tooltip = None
+    else:
+        pdf = adicionar_cores(df).to_pandas()
+        pdf["raio"] = 30 + pdf["intensidade"] * 220
+        camada = pdk.Layer(
+            "ScatterplotLayer",
+            data=pdf,
+            get_position=["stop_lon", "stop_lat"],
+            get_radius="raio",
+            get_fill_color=["r", "g", "b", 200],
+            pickable=True,
+        )
+        tooltip = {"text": "{stop_name}\nPassagens: {n_passagens}"}
+
     st.pydeck_chart(
         pdk.Deck(
+            map_style=MAPA_BASE,
             layers=[camada],
             initial_view_state=vista,
-            tooltip={"text": "{stop_name}\nPassagens: {n_passagens}"},
+            tooltip=tooltip,
         )
     )
+    if modo == "Pontos":
+        _legenda_viridis(st)
     st.caption(
-        "Intensidade = movimento da parada (nº de passagens no GTFS). "
+        "Cor (escala perceptual Viridis) e tamanho = **movimento da parada** "
+        "(nº de passagens no GTFS). Use o **mapa de calor** para densidade. "
         "Paradas sem coordenada são omitidas."
     )
 
@@ -218,7 +278,13 @@ DIAS_SEMANA = {
 
 
 def _pagina_previsoes(st, appdata, con) -> None:
-    from app.predict import get_artefato, montar_features, prever_demanda
+    from app.charts import grafico_sensibilidade
+    from app.predict import (
+        get_artefato,
+        montar_features,
+        pontos_sensibilidade,
+        prever_demanda,
+    )
 
     st.title("Previsões de demanda")
     st.warning(
@@ -263,6 +329,24 @@ def _pagina_previsoes(st, appdata, con) -> None:
         f"v{meta['version']} (treinado em {meta['trained_at']}; "
         f"MAE {meta['metrics']['mae']:.1f})."
     )
+
+    st.divider()
+    st.subheader("Sensibilidade à chuva")
+    curva = pontos_sensibilidade(
+        artefato,
+        n_viagens=n_viagens,
+        iso_dia_semana=DIAS_SEMANA[dia],
+        mes=mes,
+        temperatura=temp,
+        precipitacoes=[float(p) for p in range(0, 61, 5)],
+    )
+    st.altair_chart(
+        grafico_sensibilidade(
+            curva, "precipitacao", "demanda", titulo_x="Precipitação (mm)", titulo_y="Demanda"
+        ),
+        use_container_width=True,
+    )
+    st.caption("Como a demanda **simulada** varia com a chuva (demais fatores fixos).")
 
 
 if __name__ == "__main__":
