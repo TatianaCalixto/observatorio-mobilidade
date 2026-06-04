@@ -64,14 +64,8 @@ def ml_con():
     c.close()
 
 
-@pytest.fixture
-def app_con():
-    """DuckDB controlado com o warehouse mínimo para os testes do app.
-
-    Inclui os marts temporais + dim_linha, dim_parada (com uma parada sem coordenada),
-    mart_oferta_diaria (derivada) e stg_gtfs__stop_times.
-    """
-    c = duckdb.connect(":memory:")
+def _popular_warehouse(c: duckdb.DuckDBPyConnection) -> None:
+    """Cria o warehouse mínimo completo (marts temporais + dimensões + mart diário)."""
     _criar_marts_temporais(c)
     c.execute(
         "create table dim_linha (route_id varchar, route_short_name varchar, "
@@ -120,5 +114,44 @@ def app_con():
                  c.precipitacao_total_mm, c.temperatura_media_c, c.choveu
         """
     )
+
+
+@pytest.fixture
+def app_con():
+    """DuckDB controlado em memória com o warehouse mínimo para os testes do app."""
+    c = duckdb.connect(":memory:")
+    _popular_warehouse(c)
     yield c
     c.close()
+
+
+@pytest.fixture(scope="session", autouse=True)
+def _ambiente_app(tmp_path_factory):
+    """Prepara um warehouse de teste em arquivo e aponta o app para ele (via env).
+
+    Garante que os testes do app (AppTest) rendam contra um DuckDB determinístico — sem
+    depender do ``mobilidade.duckdb`` real nem de um ``.env`` — para cobertura estável
+    em local e no CI. Também garante um artefato de modelo para a página de previsões.
+    """
+    import os
+
+    base = tmp_path_factory.mktemp("warehouse")
+    db_path = base / "marts_test.duckdb"
+    con = duckdb.connect(str(db_path))
+    _popular_warehouse(con)
+    con.close()
+
+    os.environ["DATA_INICIO"] = "2025-06-01"
+    os.environ["DATA_FIM"] = "2026-05-31"
+    os.environ["DUCKDB_PATH"] = str(db_path)
+
+    from ml.serialize import DEFAULT_MODEL_PATH, salvar_modelo, treinar_modelo_final
+
+    if not DEFAULT_MODEL_PATH.exists():
+        con = duckdb.connect(str(db_path), read_only=True)
+        try:
+            modelo, metricas = treinar_modelo_final(con)
+        finally:
+            con.close()
+        salvar_modelo(modelo, metricas)
+    yield
