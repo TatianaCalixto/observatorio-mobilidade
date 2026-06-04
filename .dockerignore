@@ -1,0 +1,22 @@
+# Não copiar para a imagem: ambiente, dados, artefatos e caches.
+.venv/
+.git/
+.github/
+data/
+mlruns/
+mlartifacts/
+ml/artifacts/
+*.duckdb
+*.duckdb.wal
+*.parquet
+transform/target/
+transform/logs/
+transform/dbt_packages/
+__pycache__/
+**/__pycache__/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.env
+*.pyc
+docs/img/

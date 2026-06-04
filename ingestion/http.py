@@ -24,7 +24,7 @@ def download_file(
     *,
     timeout: float = 120.0,
     chunk_size: int = 1 << 16,
-) -> Path:
+) -> Path:  # pragma: no cover - download de rede (validado por execução real)
     """Baixa ``url`` para ``dest`` em streaming. Retorna o caminho do arquivo gravado."""
     import httpx
 

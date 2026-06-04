@@ -158,7 +158,7 @@ esperas; o metrô é o oposto (altíssima frequência).
 """
 
 
-def gerar_graficos(con: duckdb.DuckDBPyConnection, img_dir: Path) -> None:
+def gerar_graficos(con: duckdb.DuckDBPyConnection, img_dir: Path) -> None:  # pragma: no cover
     import matplotlib
 
     matplotlib.use("Agg")

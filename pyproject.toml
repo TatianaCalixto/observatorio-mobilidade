@@ -19,6 +19,7 @@ dependencies = [
     "mlflow",
     "streamlit",
     "pydeck",
+    "prefect",
 ]
 
 [dependency-groups]
@@ -58,8 +59,14 @@ addopts = "-ra"
 
 [tool.coverage.run]
 # Cobertura medida sobre os pacotes Python do projeto.
-source = ["ingestion", "ml", "app", "analysis"]
+source = ["ingestion", "ml", "app", "analysis", "orchestration"]
 branch = true
 
 [tool.coverage.report]
 show_missing = true
+# Exclui blocos de execução direta e código de I/O/entrypoint (validados por execução
+# real, não por testes unitários) das exigências de cobertura.
+exclude_also = [
+    "if __name__ == .__main__.:",
+    "def main\\(",
+]
