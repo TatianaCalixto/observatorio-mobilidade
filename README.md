@@ -5,6 +5,9 @@
 > **documentação viva + agente executor**.
 
 [![CI](https://github.com/TatianaCalixto/observatorio-mobilidade/actions/workflows/ci.yml/badge.svg)](https://github.com/TatianaCalixto/observatorio-mobilidade/actions/workflows/ci.yml)
+[![App ao vivo](https://img.shields.io/badge/app-ao%20vivo-FF4B4B?logo=streamlit&logoColor=white)](https://observatorio-mobilidade-xrx2sfcmn4fzwztmuwhphc.streamlit.app/)
+
+🌐 **App ao vivo:** <https://observatorio-mobilidade-xrx2sfcmn4fzwztmuwhphc.streamlit.app/>
 
 Este repositório tem **duas camadas de leitura**:
 
