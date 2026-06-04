@@ -1,0 +1,11 @@
+# Identidade visual do app (Sprint 9). Apenas aparência — não muda a lógica de dados.
+[theme]
+base = "light"
+primaryColor = "#0E7C7B"            # teal/petróleo (transporte) — cor da marca
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#EBF2F3"  # cinza-azulado claro (sidebar, cartões)
+textColor = "#16242B"               # ardósia escura
+font = "sans serif"
+
+[server]
+headless = true

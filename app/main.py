@@ -52,6 +52,8 @@ def render() -> None:
 
 
 def _pagina_visao_geral(st, appdata, con) -> None:
+    from app.charts import grafico_linha
+
     st.title("Visão Geral da rede")
     with st.spinner("Carregando KPIs..."):
         kpis = appdata.kpis_gerais(con)
@@ -66,7 +68,10 @@ def _pagina_visao_geral(st, appdata, con) -> None:
     if serie.height == 0:
         st.info("Sem dados na série diária. Rode a ingestão e o dbt build.")
         return
-    st.line_chart(serie.to_pandas().set_index("data")["total_viagens"])
+    st.altair_chart(
+        grafico_linha(serie, "data", "total_viagens", titulo_y="Partidas/dia (rede)"),
+        use_container_width=True,
+    )
     st.caption(
         "Métrica = **oferta planejada** (partidas/dia) a partir do GTFS estático. "
         "Ver `docs/metrica_oferta.md`."
@@ -75,6 +80,13 @@ def _pagina_visao_geral(st, appdata, con) -> None:
 
 def _pagina_kpis(st, appdata, con) -> None:
     from analysis.queries import agregado_clima, linhas_pior_headway, sazonalidade_dia_semana
+    from app.charts import (
+        ORDEM_DIAS,
+        PALETA,
+        grafico_barra,
+        grafico_linha,
+        preparar_sazonalidade,
+    )
 
     st.title("KPIs & Análises")
 
@@ -111,17 +123,43 @@ def _pagina_kpis(st, appdata, con) -> None:
     c3.metric("Dias no período", f"{len(pdf):,}")
 
     st.subheader("Oferta planejada ao longo do tempo")
-    st.line_chart(pdf.set_index("data")[coluna_valor])
+    st.altair_chart(
+        grafico_linha(serie, "data", coluna_valor, titulo_y="Partidas/dia"),
+        use_container_width=True,
+    )
 
     col_a, col_b = st.columns(2)
     with col_a:
         st.subheader("Sazonalidade por dia da semana")
-        saz = sazonalidade_dia_semana(con, data_inicio, data_fim).to_pandas()
-        st.bar_chart(saz.set_index("dia_semana")["media_viagens_dia"])
+        saz = preparar_sazonalidade(sazonalidade_dia_semana(con, data_inicio, data_fim))
+        st.altair_chart(
+            grafico_barra(
+                saz,
+                "dia",
+                "media_viagens_dia",
+                titulo_y="Partidas/dia",
+                ordem_x=ORDEM_DIAS,
+                cor_por="tipo_dia",
+                cor_dominio=["Dia útil", "Fim de semana"],
+                cor_faixa=[PALETA["dia_util"], PALETA["fim_de_semana"]],
+            ),
+            use_container_width=True,
+        )
     with col_b:
         st.subheader("Oferta por condição de chuva")
-        clima = agregado_clima(con).to_pandas()
-        st.bar_chart(clima.set_index("condicao")["oferta_media"])
+        st.altair_chart(
+            grafico_barra(
+                agregado_clima(con),
+                "condicao",
+                "oferta_media",
+                titulo_y="Partidas/dia",
+                cor_por="condicao",
+                cor_dominio=["sem chuva", "com chuva"],
+                cor_faixa=[PALETA["sem_chuva"], PALETA["com_chuva"]],
+                rotulos=True,
+            ),
+            use_container_width=True,
+        )
 
     st.subheader("Gargalos de regularidade (maior headway)")
     st.dataframe(linhas_pior_headway(con, n=10).to_pandas(), use_container_width=True)

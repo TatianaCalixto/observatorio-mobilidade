@@ -40,7 +40,14 @@ target-version = "py312"
 # Artefatos não versionados/gerados não devem ser linted.
 # gerar_planilha_sprints.py é o script gerador one-off da planilha de planejamento
 # (artefato de provenance, não código-fonte mantido) — ver Decisão DEC-001.
-extend-exclude = [".venv", "data", "transform/target", "mlruns", "gerar_planilha_sprints.py"]
+extend-exclude = [
+    ".venv",
+    "data",
+    "transform/target",
+    "mlruns",
+    "gerar_planilha_sprints.py",
+    "anexar_fase_visual.py",
+]
 
 [tool.ruff.lint]
 # Conjunto pragmático: erros (E), pyflakes (F), imports (I),

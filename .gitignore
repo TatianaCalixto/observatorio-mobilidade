@@ -5,6 +5,7 @@
 .env
 .env.*
 !.env.example
+.streamlit/secrets.toml
 
 # --- Dados locais (camada RAW/STAGING e warehouse) ---
 # Ignora todo o conteúdo de data/, preservando apenas a estrutura de pastas.

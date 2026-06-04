@@ -108,3 +108,20 @@ o pipeline completo de forma honesta via rotulagem. Ver DEC-007.
 **Consequências.** XGBoost (MAE 6,8) supera o baseline (MAE 17,9) ao capturar o efeito do
 clima — comparação reprodutível e registrada. A bateria de features sem vazamento (S05-T01)
 trava regressões.
+
+---
+
+## ADR-007 — Altair como biblioteca de gráficos do app
+
+**Contexto.** Os gráficos usavam `st.line_chart`/`st.bar_chart` (sem controle de cor, eixo
+ou tooltip), o que dava ao app um ar "cru". É preciso uma biblioteca melhor (S09-T02).
+
+**Decisão.** Usar **Altair** num módulo central `app/charts.py`, com **paleta semântica
+fixa** (chuva = azul, sem chuva = âmbar; dia útil vs fim de semana) e helpers reutilizáveis
+(`grafico_linha`, `grafico_barra`) com eixos rotulados (unidade) e tooltip formatado.
+
+**Alternativas.** Plotly (dependência extra mais pesada, figura menos "limpa" de testar);
+manter os charts nativos (a própria origem do visual cru).
+
+**Consequências.** Zero dependência nova (Altair já vem com o Streamlit), encodings
+**testáveis** em unit test (`chart.to_dict()`), e cores consistentes com o tema. Ver DEC-008.

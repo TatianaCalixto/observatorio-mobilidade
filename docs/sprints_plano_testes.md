@@ -35,3 +35,14 @@
 | 7 | global | Cobertura | pytest --cov >= 80% global | pyproject.toml [tool.coverage] | Concluída | 2026-06-04 | Cobertura global 90.83% (>=80%). Fonte: ingestion/ml/app/analysis/orchestration; exclui main()/__main__ e funcoes de rede/IO (pragma no cover) validadas por execucao real. |
 | 8 | docs | Manual | Reproduzir projeto seguindo o README do zero | README.md | Concluída | 2026-06-04 | README com passos make setup/ingest/dbt-build/train/app + docker, todos validados ao longo do projeto. Docker reproduz em ambiente limpo (docker run make all => 102 passed). Diagrama mermaid + screenshots. |
 | 8 | deploy | Smoke | App público carrega dashboard, mapa e previsão | https://observatorio-mobilidade-xrx2sfcmn4fzwztmuwhphc.streamlit.app/ | Concluída | 2026-06-04 | App publicado no Streamlit Cloud. Smoke (Playwright): Visao Geral renderiza com dados reais (1353 linhas/21591 paradas/oferta 108089) e zero stException. Mapa/Previsoes = mesmo codigo validado localmente, sem erros no Cloud. |
+| 9 | app/charts | Unitário | Helpers de gráfico geram encodings/cores esperados | tests/test_charts.py | Concluída | 2026-06-04 | 3 testes de spec Vega-Lite (linha area+linha; barra cor semantica dominio->faixa; ordem+rotulos). charts.py 100% cobertura. |
+| 9 | app/charts | Unitário | Gráfico de linha: rótulos de eixo e unidade corretos | tests/test_charts.py | Concluída | 2026-06-04 | test_grafico_linha_area_mais_linha_com_eixos: eixo Y titulo/unidade, X temporal, tooltip formatado. |
+| 9 | app/charts | Unitário | Barras de sazonalidade ordenadas Seg→Dom + cores | tests/test_charts.py | Concluída | 2026-06-04 | test_preparar_sazonalidade: ordem Seg->Dom (iso 1..7), rotulo PT, tipo_dia util/fim de semana; cor semantica no grafico_barra. |
+| 9 | app | Smoke | 4 páginas importam/renderizam com o novo tema | tests/test_app_smoke.py | Concluída | 2026-06-04 | AppTest parametrizado das 4 paginas sem excecao, com tema + graficos Altair. 106 testes verdes, cobertura 90.54%. |
+| 10 | app/mapa | Unitário | Mapeamento intensidade→cor (escala perceptual) |  | Pendente |  |  |
+| 10 | app/mapa | Unitário | Preparação da camada de mapa de calor |  | Pendente |  |  |
+| 10 | app | Unitário | Tabela de gargalos: colunas e formatos do column_config |  | Pendente |  |  |
+| 10 | app | Unitário | Cálculo de variação (delta) dos KPIs |  | Pendente |  |  |
+| 10 | app | Smoke | Página de KPIs em abas renderiza cada aba |  | Pendente |  |  |
+| 10 | app | Unitário | Pontos de sensibilidade da página de Previsões |  | Pendente |  |  |
+| 10 | global | Cobertura | pytest --cov >= 80% após o redesign |  | Pendente |  |  |
