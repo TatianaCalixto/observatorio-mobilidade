@@ -1,6 +1,6 @@
 # Observatório de Mobilidade Urbana 🚌
 
-> Projeto de dados **end-to-end** (Engenharia + Análise + Machine Learning + App) sobre o
+> Projeto de dados **end-to-end** (Engenharia + Análise + App) sobre o
 > transporte público de São Paulo — construído com a metodologia de
 > **documentação viva + agente executor**.
 
@@ -11,8 +11,8 @@
 
 Este repositório tem **duas camadas de leitura**:
 
-1. **O produto** — um pipeline ELT reprodutível (GTFS/INMET/IBGE → DuckDB → dbt → ML) e um
-   dashboard Streamlit que responde a uma pergunta de negócio.
+1. **O produto** — um pipeline ELT reprodutível (GTFS/INMET/IBGE → DuckDB → dbt) e um
+   dashboard Streamlit, com um modelo preditivo de apoio, que responde a uma pergunta de negócio.
 2. **O método** — todo o projeto foi planejado e executado como um **caso de uso de
    documentação viva**: uma planilha de sprints é a *fonte única de verdade* e um agente
    executor (Claude Code) trabalhou tarefa por tarefa, sem fechar nada sem teste verde e
@@ -58,7 +58,7 @@ flowchart LR
     RAW --> DUCK[("DuckDB")]
     DUCK --> DBT["dbt<br/>staging → intermediate → marts"]
     DBT --> AN["Análise<br/>(gargalos, sazonalidade, clima)"]
-    DBT --> ML["ML<br/>baseline + XGBoost + MLflow"]
+    DBT --> ML["Modelo preditivo<br/>baseline + XGBoost"]
     AN & ML --> APP["App Streamlit<br/>(KPIs, mapa, previsões)"]
     PREF["Prefect<br/>(orquestra + agenda)"] -.-> ING & DBT & ML
     CI["GitHub Actions<br/>(ruff + pytest≥80% + dbt test)"] -.-> DBT
@@ -76,7 +76,7 @@ flowchart LR
   no extremo oposto, o **metrô** (Linha 1: ~1.408 partidas/dia, headway 2,6 min).
 - **Sazonalidade**: a oferta cai ~10% no domingo; é constante entre dias úteis (propriedade
   honesta do dado planejado).
-- **Machine Learning**: prevendo uma **demanda simulada e rotulada** (DEC-007), o **XGBoost
+- **Modelo preditivo**: prevendo uma **demanda simulada e rotulada** (DEC-007), o **XGBoost
   (MAE 6,8)** supera o baseline (MAE 17,9) ao capturar o efeito do clima — com split
   **temporal sem vazamento** e tracking no **MLflow**.
 
